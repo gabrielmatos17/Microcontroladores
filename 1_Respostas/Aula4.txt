@@ -59,12 +59,30 @@ Utilize os registradores R11, R12, R13, R14 e R15 para armazenar valores tempor√
 
 (a) `f *= 2;`
 
+	mov.w R4,T0
+	add.w T0,R4
+
 (b) `g *= 3;`
 
+	mov.w R5,T0
+	add.w T0,T1
+	add.w T1,R5
+	
 (c) `h *= 4;`
+
+	mov.w R6,T0
+	add.w T0,T1
+	add.w T1,T2
+	add.w T2,R6
 
 (d) `A[2] = A[1] + A[0];`
 
+	
+
 (e) `A[3] = 2*f - 4*h;`
 
+	
+	
 (f) `A[3] = 2*(f - 2*h);`
+
+	
