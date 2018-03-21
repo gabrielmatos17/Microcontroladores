@@ -7,6 +7,7 @@
 	A: R9
 Utilize os registradores R11, R12, R13, R14 e R15 para armazenar valores temporários.
 
+
 1. Escreva os trechos de código assembly do MSP430 para:
 	(a) Somente setar o bit menos significativo de R5.
 	
