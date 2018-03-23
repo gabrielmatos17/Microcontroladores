@@ -37,7 +37,7 @@ else
 ```
 
 	cmp R7,R8
-	jge SUB
+	jeq SUB
 	mov.w #10,R4
 	add.w g,R4
 	add.w h,R4
