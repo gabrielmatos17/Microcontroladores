@@ -42,38 +42,133 @@
 
 3. Considerando a placa Launchpad do MSP430, escreva o código em C para piscar duas vezes os dois LEDs sempre que o usuário pressionar o botão.
 	
-	#include <msp430g2553.h>
-	#define LED1 BIT0
-	#define LED2 BIT6
-	#define BTN BIT3
 
-	void main (void)
-	{
-	 int i;
-	 WDTCTL = WDTPW | WDTHOLD;
-	 P1OUT = 0;
-	 P1DIR = LED1 + LED2; 
-	 
-	 for(;;){
-	 	if (PIOUT & BTN ==0)
-			PIOUT |= LED1 + LED2;
-			for(i=0;i<10000;i++){
-			PIOUT |=LED1 + LED2;
-					    };
-			PIOUT = 0;
-			for(i=0;i<10000;i++){
-			PIOUT |=LED1 + LED2;
-		else 
-	  		PIOUT &= ~(LED1 + LED2)
-	 }	
+#include <msp430g2553.h>
+#define LED1 BIT0
+#define LED2 BIT6
+#define BTN BIT3
+
+void main (void){
+	int i;
+	WDTCL = WDTPW | WDTHOLD;
+	P1DIR = LED1 + LED2;
+	P1OUT = 0;
+	
+	for(;;){
+		if (P1OUT & BTN == 0){
+			
+			P1OUT |= LED1 + LED2;			//Liga
+			
+			for(i = 0; i <10000; i++){
+			};
+			
+			P1OUT = 0;						//Desliga
+			
+			for(i = 0; i <10000; i++){
+			};
+			
+			P1OUT = LED1 + LED2;			//Liga			
+			
+			for(i = 0; i <10000; i++){
+			};
+			
+			P1OUT = 0;						//Desliga
+		};
+	};
 };
-	  
-	}	
 
 4. Considerando a placa Launchpad do MSP430, faça uma função em C que pisca os dois LEDs uma vez.
+
+void pisca (){
+	unsigned volatile int i;
+	P1OUT ^= LEDS;
+	P2OUT ^= BTN;
+	
+	for(i = 0; i<10000; i++){}
+	
+	P1OUT ^= LEDS;
+	P2OUT ^= BTN;
+	
+	for(i = 0; i<10000; i++){}
+	}
 
 
 5. Reescreva o código da questão 2 usando a função da questão 4.
 
+#define LED1 BIT0
+#define LED2 BIT6
+#define LEDS (LED1|LED2)
+#define BTN BIT3
+
+void pisca();
+
+void main (void){
+	WDTCL = WDTPW | WDTHOLD;
+	P1OUT |= LEDS;
+	P1DIR |= LEDS;
+	P2DIR &= ~BTN;
+	P2REN |= BTN;
+	P2OUT |= BTN;
+	
+	while (1){
+		pisca();
+	}
+}	
+
+void pisca (){
+	unsigned volatile int i;
+	P1OUT ^= LEDS;
+	P2OUT ^= BTN;
+	
+	for(i = 0; i<10000; i++){}
+	
+	P1OUT ^= LEDS;
+	P2OUT ^= BTN;
+	
+	for(i = 0; i<10000; i++){}
+	}
 
 6. Reescreva o código da questão 3 usando a função da questão 4.
+
+#include <msp430.h>
+#define LED1 BIT0
+#define LED2 BIT1
+#define LEDS (LED1|LED2)
+#define BTN  BIT3
+
+void pisca();
+
+void main(void)
+{
+    WDTCTL = WDTPW | WDTHOLD;
+    PM5CTL0 &= ~LOCKLPM5;
+    P1OUT |= LEDS;
+    P1DIR |= LEDS;
+    P2DIR &= ~BTN;
+    P2REN |= BTN;
+    P2OUT |= BTN;
+
+    while(1)
+    {
+        if((P2IN & BTN)==0){
+         pisca();
+         pisca();
+        }else
+            P1OUT &= ~LEDS;
+    }
+
+}
+
+void pisca(){
+    unsigned volatile int counter;
+    P1OUT ^= LEDS;
+    P2OUT ^= BTN;
+
+	for(counter = 0; counter < 30000; counter++){}
+
+	P1OUT ^= LEDS;
+    P2OUT ^= BTN;
+
+	for(counter = 0; counter < 30000; counter++){}
+}
+
