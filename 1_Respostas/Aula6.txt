@@ -165,13 +165,100 @@ O protótipo da função é:
 unsigned long long DuploFatorial(unsigned long long n);
 ```
 
-7. (a) Escreva uma função em C que calcula a função exponencial utilizando a série de Taylor da mesma. Considere o cálculo até o termo n = 20. O protótipo da função é `double ExpTaylor(double x);`
+unsigned long long DuploFatorial(unsigned long long n){
+	if(n<2){
+		return 1;
+	}else{
+		return n*DuploFatorial(n-2);
+	}
+}
+
+7. (a) Escreva uma função em C que calcula a função exponencial utilizando a série de Taylor da mesma. Considere o cálculo até o termo n = 20. O protótipo da função é `double ExpTaylor(double x);
+
+double ExpTaylor (double x){
+	double exp = 0;					//Recebe a soma das parcelas da série
+	int n = 0;					//Índice de contagem, vai até 20
+	
+	for (n = 0; n < 20; n++){
+		exp += (x**n/fatorial(n));
+	}
+	return exp;
+}
+
+double fatorial (int n){
+	if (n < 1){
+		return 1;
+	}else{
+		return n * fatoriall(n-1);
+	}
+}
+
 (b) Escreva a sub-rotina equivalente na linguagem Assembly do MSP430, mas considere que os valores de entrada e de saída são inteiros de 16 bits. A variável de entrada é fornecida pelo registrador R15, e o valor de saída também.
+
+Exp_Taylor:
+	push R5;		;Guarda o n na pilha
+	push R6;		;Guarda o valor de exp	na pilha
+	clr R5;			;R5 = 0
+	clr R6;
+
+Loop:
+	cmp #20,R5
+	jge End_Loop		;Se R5 > 20 Sai do Loop
+	mov.w R5, R14		;R14 = R5 = n
+	
+	call Potencia		;R15 = x^n
+	push R15 		;Guarda x^n na pilha
+	mov.w R5, R15		;R15 = n
+	
+	call Fatorial		;fatorial(n)
+	mov.w R15,R14		;R14 = R15 = n
+	pop R15			;Recupera x^n em R15 na pilha
+	
+	call Div		;R15 = (x^n/fatorial(n))
+
+	add.w R15, R6		;exp += (x^n/fatorial(n))
+	jmp Loop
+	
+End_Loop:
+	pop R6
+	pop R5
+	ret
+
 
 8. Escreva uma sub-rotina na linguagem Assembly do MSP430 que indica se um vetor esta ordenado de forma decrescente. Por exemplo:
 [5 4 3 2 1] e [90 23 20 10] estão ordenados de forma decrescente.
 [1 2 3 4 5] e [1 2 3 2] não estão.
 O primeiro endereço do vetor é fornecido pelo registrador R15, e o tamanho do vetor é fornecido pelo registrador R14. A saída deverá ser fornecida no registrador R15, valendo 1 quando o vetor estiver ordenado de forma decrescente, e valendo 0 em caso contrário.
+
+Decrescente:
+	push R5
+	push R6
+	mov.w R15, R6		;R6 = &a[0] 
+	mov.w R14, R5		;R5 = tamanho do vetor
+	mov.w R6, R14		;R14 = R15
+	inc.w R14		;R14 = R15 + 1
+	
+Comp_Loop:
+	cmp R15, R14		;R15 - R14 = R15 - (R15+1) 
+	jl Nao_Dec		;Se (R15 + 1) > R15, pula para Nao_Dec
+	inc.w R15		;Testa agora com R15+1
+	inc.w R14		;Testa agora com (R15+1)+1
+	dec.w R5		;Diminui o tamanho do vetor
+	cmp #0,R5
+	jne Comp_Loop		;Se R5 = 0, pula pra Eh_Dec
+	
+Eh_Dec:
+	pop.w R6		;Resgata R6 
+	pop.w R5		;Resgata R5
+	mov.w #1, R15		;Aponta 1 em R15
+	ret
+
+Nao_Dec:
+	pop.w R6		;Resgata R6
+	pop.w R5		;Resgata R5
+	clr R15			;Aponta 0 em R15
+	ret
+	
 
 9. Escreva uma sub-rotina na linguagem Assembly do MSP430 que calcula o produto escalar de dois vetores, `a` e `b`. O primeiro endereço do vetor `a` deverá ser passado através do registrador R15, o primeiro endereço do vetor `b` deverá ser passado através do registrador R14, e o tamanho do vetor deverá ser passado pelo registrador R13. A saída deverá ser fornecida no registrador R15.
 
@@ -184,4 +271,50 @@ Se o vetor for palíndromo, retorne o valor 1. Caso contrário, retorne o valor 
 int Palindromo(int vetor[ ], int tamanho);
 ```
 
+int Palindromo(int vetor[], int tamanho){
+	int count = 0;
+	
+	while (vetor[count] == vetor[tamanho - 1 - count] && count < tamanho){
+		count ++;
+	}
+	
+	if (count = tamanho){
+		return 1;
+	}else{
+		return 0;
+	}
+}
+
 (b) Escreva a sub-rotina equivalente na linguagem Assembly do MSP430. O endereço do vetor de entrada é dado pelo registrador R15, o tamanho do vetor é dado pelo registrador R14, e o resultado é dado pelo registrador R15.
+
+Palindromo:
+	push R6			;Guarda R6 na pilha
+	mov.w R14, R6		;R6 = R14 = tamanho
+	clr R13			;R13 = count = 0 
+	dec R14			;tamanho--
+	rla R14 		;tamanho = 2 * tamanho
+	add R15,R14		;R14 = &a[tamanho-1]
+		
+Palindromo_Loop:
+	cmp R6, R13					
+	jge Palindromo_Loop_End		;Se count >= tamanho, pula pra Palindromo_Loop_End
+	cmp 0(R15), 0(R14)			
+	jne Palindromo_Loop_End		;Se vetor[count] == vetor[tamanho - 1 - count], continua no loop
+	
+	inc.w R15					;R15 += 1
+	dec.d R14					;R14 -= 1
+	inc.w R13					;R13 += 1
+	
+	jmp Palindromo_Loop
+	
+Palindromo_Loop_End:
+	cmp R13, R6
+	jne Palindromo_Falso
+	pop R6
+	mov.w #1, R15
+	ret
+	
+Palindromo_Falso:
+	pop R6
+	clr R15
+	ret
