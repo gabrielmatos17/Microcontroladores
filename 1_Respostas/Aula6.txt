@@ -2,15 +2,6 @@ Para cada questão, escreva funções em C e/ou sub-rotinas na linguagem Assembl
 
 1. (a) Escreva uma função em C que calcule a raiz quadrada `x` de uma variável `S` do tipo float, utilizando o seguinte algoritmo: após `n+1` iterações, a raiz quadrada de `S` é dada por
 
-```
-x(n+1) = (x(n) + S/x(n))/2
-```
-	
-O protótipo da função é:
-
-```C
-unsigned int Raiz_Quadrada(unsigned int S);
-```
 
 						unsigned int Raiz_Quadrada(unsigned int S);
 						{
@@ -23,51 +14,147 @@ unsigned int Raiz_Quadrada(unsigned int S);
 							return x
 						}
 						
-						
-					Raiz_Quadrada: cmp #2, R15
-						jge Raiz_nao_trivial
-						ret
-					Raiz_nao_trivial: push R5
-						push R6
-						mov R15, R5
-						inc R5
-						rra R5
-						clr R6
-					Raiz_loop: cmp #10000, R6
-						jeq Raiz_end
-						push R15
-						mov R5, R14
-						call #Div
-						add R15, R5
-						rra R5
-						pop R15
-						inc R6
-						jmp Raiz_loop
-					Raiz_end: mov R5, R15
-						pop R6
-						pop R5
-						ret
-						
-
 (b) Escreva a sub-rotina equivalente na linguagem Assembly do MSP430. A variável `S` é fornecida pelo registrador R15, e a raiz quadrada de `S` (ou seja, a variável `x`) é fornecida pelo registrador R15 também.
+
+Raiz_Quadrada: 
+	cmp #2,R15				;Compara se o valor de x**2 é 1 ou 0 (evita cálculos) 
+	jge Raiz_dificil		;Pula para Raiz_dificil
+	ret
+			   
+Raiz_dificil: 
+	push R5					;Guarda o valor de R5 na pilha
+	push R6					;Guarda o valor de R6 na pilha
+	mov R15,R5				;R5 Recebe s
+	inc R5					;s += 1
+	rra R5					;s = (s+1)/2
+	clr R6					;limpa R6
+			  
+Raiz_Loop: 
+	cmp #10000, R6			;Compara se n<10000
+	jeq Raiz_End
+	push R15				;s vai para a pilha
+	mov R5,R14				;x vai para o denominador 
+	call #Div				;Sub-rotina de divisão
+	add R15,R5				;Resultado da divisão + x
+	rra R5					;Divide por 2
+	pop R15					;Recupera s
+	inc R6					;Incrementa o contador
+	jmp Raiz_Loop
+		   
+Raiz_End: 
+	mov R5,R15
+	pop R6					;Recupera R6 (n)	
+	pop R5					;Recupera R5 (s)
+	ret
+		  
+Div: 
+	clr R13					;R13 = k = 0
+	clr R12					;R12 = q = 0
+	 
+Mult_Loop: 
+	add.w R14,R13			;k += x
+	inc.W R12				;q++
+	cmp R13,R15					
+	jge Mult_loop			;Se s<k*x, permanece mo loop
+		   
+End_Mult_Loop: 
+	dec.w R12				;q--
+	mov.w R12,R15			;Retorna q
+	ret
+
 
 2. (a) Escreva uma função em C que calcule `x` elevado à `N`-ésima potência, seguindo o seguinte protótipo: 
 
-```C
-int Potencia(int x, int N);
-```
+int Potencia(int x, int n){
+	int p = x;
+	
+	if(n=0) return 1;
+	
+	while (n != 1){
+		p = p * x;
+		n--;
+	}
+return p;
+}
 
 (b) Escreva a sub-rotina equivalente na linguagem Assembly do MSP430. `x` e `n` são fornecidos através dos registradores R15 e R14, respectivamente, e a saída deverá ser fornecida no registrador R15.
 
+Potencia:
+	cmp #0, R14			;Compara se R14 = 0
+	jne Potencia_nao_trivial	;Se R14 não for igual a zero, pula para potencia_nao_trivial
+	mov.w #1,R15			;Retorna 1
+	ret
+	
+Potencia_nao_trivial:
+	push R6				;Guarda R6 na pilha
+	mov.w R14,R6			;R6 recebe R14
+	
+Loop:
+	cmp #1,R6			;Fica no loop até que n seja diferente de 1
+	jeq Loop_Exit
+	call Mult			;Multiplica R15 por x
+	dec.w R6			;n--
+	jmp Loop
+
+Loop_Exit:
+	pop R6				;Resgata R6 na pilha
+	ret
+	
+Mult:
+	mov.w R15, R14
+	mov.w R15, R13
+	clr.w R15
+
+Mult_Loop:
+    	add.w R13, R15
+    	dec.w R14
+    	cmp R14, #0 			; se R14 > 0, fica no loop
+    	jl Mult_Loop
+
+Mult_Exit:
+    	ret
+	
+
 3. Escreva uma sub-rotina na linguagem Assembly do MSP430 que calcula a divisão de `a` por `b`, onde `a`, `b` e o valor de saída são inteiros de 16 bits. `a` e `b` são fornecidos através dos registradores R15 e R14, respectivamente, e a saída deverá ser fornecida através do registrador R15.
+
+Div:
+	clr R13			;Zera um reg. temporário (R13=k=0)
+	clr R12			;Zera um reg. temporário (count) (R12 = q = 0)
+	
+Mult_Loop:
+	add.w R14, R13		;R13 += b
+	inc.w R12		;q++
+	cmp R13,R15			
+	jge Mult_Loop		;Se R15 >= R13, fica no loop
+
+End_Mult_Loop:
+	dec.w R12		;q--
+	mov.w R12, R15		;retorna q
+	ret
+	
 
 4. Escreva uma sub-rotina na linguagem Assembly do MSP430 que calcula o resto da divisão de `a` por `b`, onde `a`, `b` e o valor de saída são inteiros de 16 bits. `a` e `b` são fornecidos através dos registradores R15 e R14, respectivamente, e a saída deverá ser fornecida através do registrador R15.
 
 5. (a) Escreva uma função em C que indica a primalidade de uma variável inteira sem sinal, retornando o valor 1 se o número for primo, e 0, caso contrário. Siga o seguinte protótipo:
 
-```C
-int Primalidade(unsigned int x);
-```
+int Primalidade(unsigned int x){
+	unsigned int tst = x-1;
+	
+	if(x<2){
+		return 0;  //Não é primo
+	}
+	
+	while (x % tst != 0){
+		tst--;
+	}
+	
+	if (tst ==1){
+		return 1;	//É primo 
+	}else{
+		return 0;	// Não é primo
+	}
+}
+
 
 (b) Escreva a sub-rotina equivalente na linguagem Assembly do MSP430. A variável de entrada é fornecida pelo registrador R15, e o valor de saída também.
 
